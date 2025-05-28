@@ -1,0 +1,163 @@
+import tkinter as tk
+import random
+
+class MathFlashCards:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Math Flash Cards - Area Edition")
+        self.root.geometry("400x700")
+        self.root.configure(bg='#0052cc')
+
+        self.difficulties = {
+            "Easy": lambda: self.make_q("rectangle", w := random.randint(2, 10), h := random.randint(2, 10), w * h),
+            "Medium": lambda: self.make_q("triangle", b := random.randint(3, 15), h := random.randint(3, 15), 0.5 * b * h),
+            "Hard": lambda: self.make_q("circle", r := random.randint(2, 12), None, 3.14 * r * r)
+        }
+
+        self.q_total = 20
+        self.difficulty = "Easy"
+        self.questions = []
+        self.answers = []
+        self.qn = 0
+        self.score = 0
+        self.timer = 120
+        self.running = False
+
+        self.main_menu()
+
+    def main_menu(self):
+        self.clear()
+        self.title_label("Math Flash Cards")
+        self.button("Start", self.details, 150, 110)
+        self.button("Info", lambda: print("Info clicked"), 60, 180)
+        self.button("History\nof Math", lambda: print("History clicked"), 210, 180)
+        self.button("Quit", self.root.quit, 150, 250)
+
+    def details(self):
+        self.clear()
+        self.label("Details", 18).pack(pady=20)
+        self.label("Enter First & Last Name").pack()
+        self.name_entry = tk.Entry(self.root, font=("Arial", 14), justify='center')
+        self.name_entry.pack(pady=10)
+
+        self.label("Difficulty", 14).pack(pady=10)
+        f = tk.Frame(self.root, bg='#0052cc'); f.pack()
+        for d in self.difficulties:
+            self.button(d, lambda x=d: self.set_diff(x), parent=f).pack(side='left', padx=5)
+
+        self.selected = self.label(f"Selected: {self.difficulty}")
+        self.selected.pack(pady=10)
+        self.button("Start", self.start_game).pack(pady=20)
+        self.button("Back", self.main_menu).pack()
+
+    def set_diff(self, d):
+        self.difficulty = d
+        self.selected.config(text=f"Selected: {d}")
+
+    def start_game(self):
+        name = self.name_entry.get().strip()
+        if not name:
+            print("Name required!")
+            return
+        self.questions.clear()
+        self.answers.clear()
+        self.qn = 0
+        self.score = 0
+        self.timer = 120
+        self.running = True
+        for _ in range(self.q_total):
+            q, a = self.difficulties[self.difficulty]()
+            self.questions.append(q)
+            self.answers.append(a)
+        self.quiz()
+
+    def quiz(self):
+        self.clear()
+        top = tk.Frame(self.root, bg='#0052cc'); top.pack(pady=10)
+        self.timer_lbl = self.label("2:00", 20, width=6, parent=top); self.timer_lbl.pack(side='left', padx=10)
+        self.q_count = self.label(f"1/{self.q_total}", 16, width=6, parent=top); self.q_count.pack(side='left')
+
+        self.q_label = tk.Label(self.root, text="", font=("Arial", 16, "bold"),
+                                bg="white", wraplength=340, justify='center')
+        self.q_label.pack(pady=30, ipadx=10, ipady=10)
+
+        self.entry = tk.Entry(self.root, font=("Arial", 16), justify='center')
+        self.entry.pack(pady=10)
+
+        self.button("Submit", self.submit).pack(pady=15)
+        self.button("Restart", self.start_game).pack()
+
+        self.show_q()
+        self.tick()
+
+    def show_q(self):
+        if self.qn < self.q_total:
+            self.q_label.config(text=self.questions[self.qn])
+            self.q_count.config(text=f"{self.qn+1}/{self.q_total}")
+            self.entry.delete(0, tk.END)
+        else:
+            self.running = False
+            print(f"Game over. Final score: {self.score}/{self.q_total}")
+
+    def submit(self):
+        if not self.running:
+            return
+        ans = self.entry.get().strip()
+        if not ans:
+            print("Answer required.")
+            return
+        try:
+            val = float(ans)
+        except:
+            print("Invalid input.")
+            return
+        if abs(val - self.answers[self.qn]) < 0.01:
+            self.score += 1
+        self.qn += 1
+        self.show_q()
+
+    def tick(self):
+        if not self.running:
+            return
+        m, s = divmod(self.timer, 60)
+        self.timer_lbl.config(text=f"{m}:{s:02d}")
+        if self.timer > 0 and self.qn < self.q_total:
+            self.timer -= 1
+            self.root.after(1000, self.tick)
+        else:
+            self.running = False
+            print("Time's up!")
+            print(f"Score: {self.score}/{self.q_total}")
+
+    def make_q(self, shape, a, b, ans):
+        if shape == "rectangle":
+            return f"What is the area of a rectangle with width {a} and height {b}?", ans
+        elif shape == "triangle":
+            return f"What is the area of a triangle with base {a} and height {b}? (Area = 0.5 × base × height)", ans
+        else:
+            return f"What is the area of a circle with radius {a}? (Use π ≈ 3.14)", ans
+
+    def button(self, txt, cmd, x=None, y=None, parent=None):
+        b = tk.Button(parent or self.root, text=txt, command=cmd, font=("Arial", 12, "bold"),
+                      bg="white", fg="black", width=12, relief='solid')
+        if x is not None and y is not None:
+            b.place(x=x, y=y, width=100, height=45)
+        return b
+
+    def label(self, txt, size=14, fg='white', bg='#0052cc', width=None, parent=None):
+        return tk.Label(parent or self.root, text=txt, font=("Arial", size), fg=fg, bg=bg, width=width)
+
+    def title_label(self, txt):
+        c = tk.Canvas(self.root, width=340, height=70, bg='#0052cc', highlightthickness=0)
+        c.place(x=30, y=20)
+        c.create_rectangle(10, 5, 330, 65, fill='white', outline='black', width=4)
+        c.create_text(170, 35, text=txt, font=("Arial", 22, "bold"))
+
+    def clear(self):
+        for w in self.root.winfo_children():
+            w.destroy()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = MathFlashCards(root)
+    root.mainloop()
