@@ -1,0 +1,64 @@
+import tkinter as tk
+
+class MathFlashCards:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Math Flash Cards - Area Edition")
+        self.root.geometry("400x700")
+        self.root.configure(bg='#0052cc')
+        self.difficulty = "Easy"
+        self.main_menu()
+
+    def main_menu(self):
+        self.clear()
+        self.title_label("Math Flash Cards")
+        self.button("Start", self.details, 150, 110)
+        self.button("Info", lambda: print("Info clicked"), 60, 180)
+        self.button("History\nof Math", lambda: print("History clicked"), 210, 180)
+        self.button("Quit", self.root.quit, 150, 250)
+
+    def details(self):
+        self.clear()
+        self.label("Details", 18).pack(pady=20)
+        self.label("Enter First & Last Name").pack()
+        self.name_entry = tk.Entry(self.root, font=("Arial", 14), justify='center')
+        self.name_entry.pack(pady=10)
+
+        self.label("Difficulty", 14).pack(pady=10)
+        f = tk.Frame(self.root, bg='#0052cc'); f.pack()
+        for d in ["Easy", "Medium", "Hard"]:
+            self.button(d, lambda x=d: self.set_diff(x), parent=f).pack(side='left', padx=5)
+
+        self.selected = self.label(f"Selected: {self.difficulty}")
+        self.selected.pack(pady=10)
+        self.button("Start", lambda: print("Game started")).pack(pady=20)
+        self.button("Back", self.main_menu).pack()
+
+    def set_diff(self, d):
+        self.difficulty = d
+        self.selected.config(text=f"Selected: {d}")
+
+    def button(self, txt, cmd, x=None, y=None, parent=None):
+        b = tk.Button(parent or self.root, text=txt, command=cmd, font=("Arial", 12, "bold"),
+                      bg="white", fg="black", width=12, relief='solid')
+        if x is not None and y is not None:
+            b.place(x=x, y=y, width=100, height=45)
+        return b
+
+    def label(self, txt, size=14, fg='white', bg='#0052cc', width=None, parent=None):
+        return tk.Label(parent or self.root, text=txt, font=("Arial", size), fg=fg, bg=bg, width=width)
+
+    def title_label(self, txt):
+        c = tk.Canvas(self.root, width=340, height=70, bg='#0052cc', highlightthickness=0)
+        c.place(x=30, y=20)
+        c.create_rectangle(10, 5, 330, 65, fill='white', outline='black', width=4)
+        c.create_text(170, 35, text=txt, font=("Arial", 22, "bold"))
+
+    def clear(self):
+        for w in self.root.winfo_children():
+            w.destroy()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = MathFlashCards(root)
+    root.mainloop()
